@@ -229,9 +229,74 @@ kernel依赖kernel.ld和obj/kern/*/*.o。其中kernel.ld已经存在，而后者
     }
 ```
 
+### 练习5
+实现函数调用堆栈跟踪函数
 
+跟踪函数的输出为：
+```
+    ebp:0x00007b38 eip:0x00100a3c args:0x00010094 0x00010094 0x00007b68 0x0010007f 
+        kern/debug/kdebug.c:306: print_stackframe+21
+    ebp:0x00007b48 eip:0x00100d3c args:0x00000000 0x00000000 0x00000000 0x00007bb8 
+        kern/debug/kmonitor.c:125: mon_backtrace+10
+    ebp:0x00007b68 eip:0x0010007f args:0x00000000 0x00007b90 0xffff0000 0x00007b94 
+        kern/init/init.c:48: grade_backtrace2+19
+    ebp:0x00007b88 eip:0x001000a1 args:0x00000000 0xffff0000 0x00007bb4 0x00000029 
+        kern/init/init.c:53: grade_backtrace1+27
+    ebp:0x00007ba8 eip:0x001000be args:0x00000000 0x00100000 0xffff0000 0x00100043 
+        kern/init/init.c:58: grade_backtrace0+19
+    ebp:0x00007bc8 eip:0x001000df args:0x00000000 0x00000000 0x00000000 0x00103280 
+        kern/init/init.c:63: grade_backtrace+26
+    ebp:0x00007be8 eip:0x00100050 args:0x00000000 0x00000000 0x00000000 0x00007c4f 
+        kern/init/init.c:28: kern_init+79
+    ebp:0x00007bf8 eip:0x00007d6e args:0xc031fcfa 0xc08ed88e 0x64e4d08e 0xfa7502a8 
+        <unknow>: -- 0x00007d6d --
+```
 
- 
+最深一层为bootmain函数。在bootmain之前，bootloader设置了自0x7c00开始的堆栈，然后使用`call bootmain`
+进入bootmain函数，因此ebp为0x7bf8，eip同理。
 
+### 练习6
 
+1. 中断向量表一个表项8字节，其中2-3字节是段选择子，0-1字节和6-7字节拼接成为段位移。
+
+2. 完善`idt_init`函数 
+
+```c
+    void
+    idt_init(void) {
+        extern uintptr_t __vectors[]; 
+        int32_t i;
+
+        for (i = 0; i < sizeof(idt) / sizeof(struct gatedesc); i++) {
+            SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_KERNEL);
+        }
+
+        lidt(&idt_pd);
+    }
+```
+
+3. 完善中断处理函数trap
+
+实际上只需要完善`trap_dispatch`中的对应部分即可。
+
+```c
+    static void
+    trap_dispatch(struct trapframe *tf) {
+        char c;
+        static uint32_t tick_cnt = 0;
+
+        switch (tf->tf_trapno) {
+        case IRQ_OFFSET + IRQ_TIMER:
+            
+            if(++tick_cnt == TICK_NUM) {
+                tick_cnt = 0;
+                print_ticks();
+            }
+            break;
+            
+            ...
+        }
+    }
+
+```
 
