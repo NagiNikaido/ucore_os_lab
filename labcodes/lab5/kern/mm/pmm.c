@@ -420,7 +420,6 @@ page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
         *ptep = 0;                            //(5) clear second page table entry
         tlb_invalidate(pgdir, la);            //(6) flush tlb
     }
-#endif
 }
 
 void
@@ -488,7 +487,7 @@ copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share) {
         assert(page!=NULL);
         assert(npage!=NULL);
         int ret=0;
-        /* LAB5:EXERCISE2 YOUR CODE
+        /* LAB5:EXERCISE2 2016011322
          * replicate content of page to npage, build the map of phy addr of nage with the linear addr start
          *
          * Some Useful MACROs and DEFINEs, you can use them in below implementation.
@@ -502,6 +501,8 @@ copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share) {
          * (3) memory copy from src_kvaddr to dst_kvaddr, size is PGSIZE
          * (4) build the map of phy addr of  nage with the linear addr start
          */
+        memcpy(page2kva(npage), page2kva(page), PGSIZE);
+        ret = page_insert(to, npage, start, perm);
         assert(ret == 0);
         }
         start += PGSIZE;
@@ -568,10 +569,14 @@ pgdir_alloc_page(pde_t *pgdir, uintptr_t la, uint32_t perm) {
             return NULL;
         }
         if (swap_init_ok){
-            swap_map_swappable(check_mm_struct, la, page, 0);
-            page->pra_vaddr=la;
-            assert(page_ref(page) == 1);
-            //cprintf("get No. %d  page: pra_vaddr %x, pra_link.prev %x, pra_link_next %x in pgdir_alloc_page\n", (page-pages), page->pra_vaddr,page->pra_page_link.prev, page->pra_page_link.next);
+            if(check_mm_struct!=NULL) {
+                swap_map_swappable(check_mm_struct, la, page, 0);
+                page->pra_vaddr=la;
+                assert(page_ref(page) == 1);
+                //cprintf("get No. %d  page: pra_vaddr %x, pra_link.prev %x, pra_link_next %x in pgdir_alloc_page\n", (page-pages), page->pra_vaddr,page->pra_page_link.prev, page->pra_page_link.next);
+            } 
+            else  {
+            }
         }
 
     }

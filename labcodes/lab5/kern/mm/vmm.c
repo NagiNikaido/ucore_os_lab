@@ -485,7 +485,10 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
 		  2) *ptep & PTE_P == 0 & but *ptep!=0, it means this pte is a  swap entry.
 		     We should add the LAB3's results here.
      */
-        if(swap_init_ok) {
+        if (*ptep & PTE_P) {
+            panic("!!!");
+        }
+        else if (swap_init_ok) {
             struct Page *page=NULL;
             ret = swap_in(mm, addr, &page);
             if (ret!=0) goto failed;
