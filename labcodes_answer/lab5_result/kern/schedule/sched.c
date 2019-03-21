@@ -3,6 +3,7 @@
 #include <proc.h>
 #include <sched.h>
 #include <assert.h>
+#include <kdebug.h>
 
 void
 wakeup_proc(struct proc_struct *proc) {
@@ -26,6 +27,9 @@ schedule(void) {
     bool intr_flag;
     list_entry_t *le, *last;
     struct proc_struct *next = NULL;
+    cprintf("sched proc: %d\n", current->pid);
+    print_stackframe();
+    cprintf("\n");
     local_intr_save(intr_flag);
     {
         current->need_resched = 0;
