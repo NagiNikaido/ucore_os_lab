@@ -49,7 +49,7 @@ sched_init(void) {
     sched_class = &default_sched_class;
 
     rq = &__rq;
-    rq->max_time_slice = 5;
+    rq->max_time_slice = MAX_TIME_SLICE;
     sched_class->init(rq);
 
     cprintf("sched class: %s\n", sched_class->name);
@@ -79,6 +79,7 @@ void
 schedule(void) {
     bool intr_flag;
     struct proc_struct *next;
+    cprintf("sched proc: %d\n", current->pid);
     local_intr_save(intr_flag);
     {
         current->need_resched = 0;
